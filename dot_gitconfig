@@ -1,0 +1,19 @@
+[credential]
+	credentialStore = gpg
+	helper = cache --timeout 7200
+	helper = oauth
+[user]
+	name = Anders Klint
+	email = anders.klint519@gmail.com
+[merge]
+	tool = vscode
+[mergetool "vscode"]
+	cmd = code --wait --merge $REMOTE $LOCAL $BASE $MERGED
+[alias]
+	acm = !git add -A && git commit --amend --no-edit
+	acm-f = !git acm && git push -f 
+	dog = log --all --decorate --oneline --graph
+	ch = checkout
+	s = status
+	# list branches sorted by last modified
+	b = "!git for-each-ref --sort='-authordate' --format='%(authordate)%09%(objectname:short)%09%(refname)' refs/heads | sed -e 's-refs/heads/--'"
