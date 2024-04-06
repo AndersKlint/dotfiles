@@ -13,12 +13,16 @@ user-theme@gnome-shell-extensions.gcampax.github.com
 noannoyance-fork@vrba.dev
 Vitals@CoreCoding.com
 
-firefox https://github.com/vikdevelop/SaveDesktop
 mkdir /tmp/savedesktop-tmp  && git clone https://github.com/vikdevelop/SaveDesktop /tmp/savedesktop-tmp && python3 /tmp/savedesktop-tmp/native/native_installer.py --install && rm -rf /tmp/savedesktop-tmp
-launch app savedesktop and import fedora-desktop.sd.tar.gz
+savedesktop
+in app import fedora-desktop.sd.tar.gz
+
+# ZSH
+firefox https://medium.com/@satriajanaka09/setup-zsh-oh-my-zsh-powerlevel10k-on-ubuntu-20-04-c4a4052508fd
 
 # Download music (soulseek client)
 firefox https://github.com/Nicotine-Plus/nicotine-plus
+flatpak install org.nicotine_plus.Nicotine
 
 # Bitwig
 firefox https://www.bitwig.com/previous_releases/
