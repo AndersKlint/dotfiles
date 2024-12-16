@@ -63,3 +63,6 @@ sudo dnf install pdfshuffler -y
 sudo dnf install git-credential-manager -y
 sudo dnf install git-credential-oauth  -y
 sudo dnf install lutris -y
+
+# Chinese keyboard, disable super enter shortcut in gnome keyboard settings
+sudo dnf install -y fcitx5  fcitx5-configtool  fcitx5-autostart fcitx5-chinese-addons
