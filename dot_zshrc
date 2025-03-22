@@ -5,8 +5,14 @@ if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]
   source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
 fi
 
-export PATH="$PATH:$HOME/.local/share/yabridge"
+export PATH="$PATH:$HOME/.local/share/yabridge:$HOME/.local/bin:$HOME/software/flutter/flutter/bin"
 
+
+export ANDROID_HOME=$HOME/software/android-sdk
+export PATH=$PATH:$ANDROID_HOME/emulator
+export PATH=$PATH:$ANDROID_HOME/tools
+export PATH=$PATH:$ANDROID_HOME/tools/bin
+export PATH=$PATH:$ANDROID_HOME/platform-tools
 
 # If you come from bash you might have to change your $PATH.
 # export PATH=$HOME/bin:/usr/local/bin:$PATH
@@ -119,3 +125,7 @@ SAVEHIST=100000
 [ -f ~/.resh/shellrc ] && source ~/.resh/shellrc # this line was added by RESH
 
 eval $(thefuck --alias)
+
+# Disables annoying post paste auto complete, while still having bracketed paste
+# https://github.com/zsh-users/zsh-autosuggestions/issues/511
+ZSH_AUTOSUGGEST_CLEAR_WIDGETS+=(bracketed-paste)
