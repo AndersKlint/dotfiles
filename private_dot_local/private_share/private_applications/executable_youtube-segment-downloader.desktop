@@ -1,0 +1,11 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=YouTube Segment Downloader
+Comment=Download specific segments from YouTube videos
+Exec=/home/anders/scripts/yt-dlp-section-gui.sh
+Icon=edit-cut
+Terminal=false
+Categories=Utility;AudioVideo;Network;
+StartupWMClass=yt-dlp-section-gui.sh
+

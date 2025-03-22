@@ -1,10 +1,39 @@
 #!/bin/zsh
 
-# Define the directory where the video segments will be saved
-readonly SAVE_DIR="$HOME/Videos/Aiya"
+# ANSI color codes for text (not background)
+GREEN='\033[1;32m'   # Bright green text
+RED='\033[1;31m'     # Bright red text
+NC='\033[0m'         # No Color (reset)
+
+# Function to show success or error messages
+show_message() {
+    local msg_type="$1"
+    local message="$2"
+    if [[ "$msg_type" == "success" ]]; then
+        echo "${GREEN} ✅  $message ${NC}"
+    else
+        echo "${RED} ❌  $message ${NC}"
+    fi
+}
+
+# Check if at least 2 arguments are provided (start and end URL)
+if [[ $# -lt 2 ]]; then
+    show_message "error" "Usage: $0 <YouTube URL with start timestamp> <YouTube URL with end timestamp> [Save Path]"
+    exit 1
+fi
+
+# Extract arguments
+start_url="$1"
+end_url="$2"
+SAVE_DIR="${3:-$HOME/Videos/Aiya}"  # Use 3rd arg if provided, else default path
 
 # Create the directory if it doesn't exist
-mkdir -p "$SAVE_DIR"
+mkdir -p "$SAVE_DIR" || {
+    show_message "error" "Failed to create directory: $SAVE_DIR"
+    exit 1
+}
+
+echo "Saving downloaded segment to: $SAVE_DIR"
 
 # Function to extract video ID and timestamp from a YouTube URL
 extract_id_and_time() {
@@ -20,7 +49,7 @@ extract_id_and_time() {
         video_id="${url##*v=}"
         video_id="${video_id%%&*}"   # Remove additional params
     else
-        echo "Error: Unable to extract video ID from URL: $url"
+        show_message "error" "Unable to extract video ID from URL: $url"
         exit 1
     fi
 
@@ -29,7 +58,7 @@ extract_id_and_time() {
         timestamp="${url##*t=}"
         timestamp="${timestamp%%[^0-9]*}"  # Remove trailing "s" or any non-numeric chars
     else
-        echo "Error: Unable to extract timestamp from URL: $url"
+        show_message "error" "Unable to extract timestamp from URL: $url"
         exit 1
     fi
 
@@ -86,71 +115,70 @@ shift_and_trim_vtt_subtitles() {
     ' "$input_subs" > "$output_subs"
 }
 
-# Check if two arguments are provided
-if [[ $# -ne 2 ]]; then
-    echo "Usage: $0 <YouTube URL with start timestamp> <YouTube URL with end timestamp>"
-    exit 1
-fi
+main() {
+    # Extract video ID and timestamps from the provided URLs
+    start_info=($(extract_id_and_time "$start_url"))
+    end_info=($(extract_id_and_time "$end_url"))
 
-# Extract video ID and timestamps from the provided URLs
-start_url="$1"
-end_url="$2"
+    start_video_id="${start_info[1]}"
+    start_time="${start_info[2]}"
 
-start_info=($(extract_id_and_time "$start_url"))
-end_info=($(extract_id_and_time "$end_url"))
+    end_video_id="${end_info[1]}"
+    end_time="${end_info[2]}"
 
-start_video_id="${start_info[1]}"
-start_time="${start_info[2]}"
+    # Check if the video IDs match
+    if [[ "$start_video_id" != "$end_video_id" ]]; then
+        show_message "error" "The provided URLs refer to different videos."
+        exit 1
+    fi
 
-end_video_id="${end_info[1]}"
-end_time="${end_info[2]}"
+    # Calculate the duration of the segment
+    duration=$((end_time - start_time))
 
-# Check if the video IDs match
-if [[ "$start_video_id" != "$end_video_id" ]]; then
-    echo "Error: The provided URLs refer to different videos."
-    exit 1
-fi
+    if [[ $duration -le 0 ]]; then
+        show_message "error" "The end time must be greater than the start time."
+        exit 1
+    fi
 
-# Calculate the duration of the segment
-duration=$((end_time - start_time))
+    # Create a download-sections argument: "*start-end"
+    section_arg="*${start_time}-${end_time}"
 
-if [[ $duration -le 0 ]]; then
-    echo "Error: The end time must be greater than the start time."
-    exit 1
-fi
+    # Construct the output filename
+    output_file="$SAVE_DIR/${start_video_id}_segment_${start_time}s_to_${end_time}s.%(ext)s"
 
-# Create a download-sections argument: "*start-end"
-section_arg="*${start_time}-${end_time}"
+    # Download the specified segment using yt-dlp --download-sections
+    yt-dlp \
+        --download-sections "$section_arg" \
+        --force-keyframes-at-cuts \
+        --remux-video mkv \
+        --write-subs \
+        --sub-format "vtt" \
+        -f "bv*[height=1080][vbr<=7000]+ba/b" \
+        -o "$output_file" \
+        "https://www.youtube.com/watch?v=$start_video_id"
 
-# Construct the output filename
-output_file="$SAVE_DIR/${start_video_id}_segment_${start_time}s_to_${end_time}s.%(ext)s"
+    if [[ $? -ne 0 ]]; then
+        show_message "error" "Video download failed."
+        exit 1
+    fi
 
-# Download the specified segment using yt-dlp --download-sections
-yt-dlp \
-    --download-sections "$section_arg" \
-    --force-keyframes-at-cuts \
-    --remux-video mkv \
-    --write-subs \
-    --sub-format "vtt" \
-    -f "bv*[height=1080][vbr<=7000]+ba/b" \
-    -o "$output_file" \
-    "https://www.youtube.com/watch?v=$start_video_id"
+    show_message "success" "Video segment successfully cut and saved to $SAVE_DIR"
 
-echo "Downloaded segment saved to: $SAVE_DIR"
+    # Find the subtitle file (.vtt)
+    subs_file="$(ls "$SAVE_DIR/${start_video_id}_segment_${start_time}s_to_${end_time}s"*.vtt 2>/dev/null | head -n 1)"
 
-# Find the subtitle file (.vtt)
-subs_file="$(ls "$SAVE_DIR/${start_video_id}_segment_${start_time}s_to_${end_time}s"*.vtt 2>/dev/null | head -n 1)"
+    if [[ -f "$subs_file" ]]; then
+        shifted_subs_file="${subs_file%.vtt}_shifted_trimmed_${start_time}s.vtt"
+        echo "Shifting and trimming subtitles by ${start_time} seconds, duration ${duration} seconds..."
+        shift_and_trim_vtt_subtitles "$subs_file" "$shifted_subs_file" "$start_time" "$duration"
+        echo "Shifted and trimmed subtitles saved to: $shifted_subs_file"
 
-if [[ -f "$subs_file" ]]; then
-    shifted_subs_file="${subs_file%.vtt}_shifted_trimmed_${start_time}s.vtt"
-    echo "Shifting and trimming subtitles by ${start_time} seconds, duration ${duration} seconds..."
-    shift_and_trim_vtt_subtitles "$subs_file" "$shifted_subs_file" "$start_time" "$duration"
-    echo "Shifted and trimmed subtitles saved to: $shifted_subs_file"
+        # Delete the original subtitle file
+        echo "Deleting original subtitle file: $subs_file"
+        rm "$subs_file"
+    else
+        echo "No subtitle file found to shift/trim."
+    fi
+}
 
-    # Delete the original subtitle file
-    echo "Deleting original subtitle file: $subs_file"
-    rm "$subs_file"
-else
-    echo "No subtitle file found to shift/trim."
-fi
-
+main
