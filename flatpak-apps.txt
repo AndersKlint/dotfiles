@@ -1,0 +1,8 @@
+com.discordapp.Discord
+com.github.PintaProject.Pinta
+com.github.tchx84.Flatseal
+com.github.wwmm.easyeffects
+com.mastermindzh.tidal-hifi
+org.fedoraproject.MediaWriter
+org.nicotine_plus.Nicotine
+tv.plex.PlexDesktop
