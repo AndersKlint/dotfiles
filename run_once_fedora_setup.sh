@@ -65,5 +65,5 @@ sudo dnf install git-credential-oauth  -y
 sudo dnf install lutris -y
 sudo dnf install micro -y
 
-# Chinese keyboard, disable super enter shortcut in gnome keyboard s ettings
+# Chinese keyboard, disable super enter shortcut in gnome keyboard s ettings. Then open fcitx config and search for cn and add pinyin
 sudo dnf install -y fcitx5  fcitx5-configtool  fcitx5-autostart fcitx5-chinese-addons

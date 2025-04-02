@@ -80,3 +80,7 @@ systemctl status disable-gpp0-wakeup.service
 # amd_gpu
 
 firefox https://github.com/Umio-Yasuno/amdgpu_top/releases/tag/v0.7.0
+
+# Philips monitor color profile (night light not working)
+
+colormgr device-add-profile xrandr-Philips\ Consumer\ Electronics\ Company-PHL\ 346E2C-UK02315039381 icc-d7600dd1523962643a4b78bda41ca693
